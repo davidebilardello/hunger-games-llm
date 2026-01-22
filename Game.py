@@ -1,3 +1,5 @@
+import random
+
 from Player import Player
 
 
@@ -7,11 +9,11 @@ class Game:
 
     # zones = ["Cornucopia", "Palude Nebbiosa", ]
 
-    def __init__(self, nGroups=10, groupPerPlayer=1):
+    def __init__(self, n_groups=5, group_per_player=2):
         self.groups = {}
-        for i in range(nGroups):
+        for i in range(n_groups):
             self.groups[i] = []
-            for j in range(groupPerPlayer):
+            for j in range(group_per_player):
                 self.groups[i].append(Player(self, distretto=i))
 
     def loop_game(self):
@@ -26,6 +28,7 @@ class Game:
             if len(alive_players) <= 1:
                 break
 
+            random.shuffle(all_players)
             for p in all_players:
                 if p.life_points <= 0:
                     continue
@@ -38,6 +41,6 @@ class Game:
 
         winner = [p for p in all_players if p.life_points > 0]
         if winner:
-            print(f"Il vincitore è il giocatore del distretto {winner[0].distretto}")
+            print(f"Il vincitore è il giocatore del distretto {winner[0].distretto} {winner[0].name}")
         else:
             print("Non è rimasto nessun sopravvissuto.")

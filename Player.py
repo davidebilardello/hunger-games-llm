@@ -1,8 +1,11 @@
 import json
 import random
 import re
+from faker import Faker
 
 from vllm import LLM, SamplingParams
+
+fake = Faker()
 
 
 class Player:
@@ -19,9 +22,9 @@ class Player:
     )
     sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=100)
 
-    def __init__(self, game, distretto="1", nome="Davide Bilardello"):
+    def __init__(self, game, distretto="1", ):
         self.game = game
-        self.nome = nome
+        self.name = fake.name()
         self.distretto = distretto
 
         self.life_points = random.randrange(15, 20)
@@ -30,8 +33,11 @@ class Player:
         self.operazioni_effettuate = []
         self.zone = "Cornucopia"
 
+    def get_name(self):
+        return f"{self.name} del distretto {self.distretto}"
+
     def get_prompt(self, targets):
-        target_info = ", ".join([f"Player {t.distretto}" for t in targets])
+        target_info = ", ".join([f"Player {t.get_name()}" for t in targets])
         can_attack = len(targets) > 0
 
         return f"""You are a professionist player of hunger games. You have to answer ONLY in JSON with just the next operation to do. DO not put other words. Do not type your thoughts.
@@ -50,7 +56,7 @@ class Player:
                 Give the code of the next operation:
                 {"1 - Attack other player" if can_attack else ""}
                 {"2 - Get a weapon if there is" if len(self.game.weapons) > 0 else ""}
-                3 - Move to another zone (may die)
+                3 - Move to another zone (may heal, die, or damaged)
 
                 Example of valid answer:
                 {{"op": 1}}
@@ -67,7 +73,7 @@ class Player:
             p.life_points = 0
 
         if (p.life_points == 0):
-            print(f"Parte un colpo di cannone per la morte del player {p.distretto}")
+            print(f"Parte un colpo di cannone per la morte del player {p.get_name()}")
 
     def get_weapon(self):
         random.shuffle(self.game.weapons)
@@ -77,7 +83,7 @@ class Player:
         if random.random() < 0.03:
             self.life_points = 0
             print(
-                f"Sfortuna nera! Parte un colpo di cannone: il player {self.distretto} è morto per cause naturali spostandosi.")
+                f"Sfortuna nera! Parte un colpo di cannone: il player {self.get_name()} è morto per cause naturali spostandosi.")
             return
 
         available_zones = [z for z in self.game.zones if z != self.zone]
@@ -92,12 +98,12 @@ class Player:
                 if random.random() < 0.10:
                     self.life_points += 1
                     print(
-                        f"Il player {self.distretto} ha trovato un momento di pace in {self.zone} e recupera 1 LP (LP: {self.life_points})")
+                        f"Il player {self.get_name()} ha trovato un momento di pace in {self.zone} e recupera 1 LP (LP: {self.life_points})")
             else:
                 # 20% di possibilità di essere attaccato se c'è gente
                 if random.random() < 0.20:
                     attacker = random.choice(others)
-                    print(f"Imboscata! {self.distretto} è stato sorpreso da {attacker.distretto} in {self.zone}!")
+                    print(f"Imboscata! {self.get_name()} è stato sorpreso da {attacker.get_name()} in {self.zone}!")
                     attacker.attack_player(self)
 
     def handle_op(self, j, all_players):
@@ -108,7 +114,7 @@ class Player:
         try:
             data = json.loads(cl)
             op = data.get("op")
-            print(f"Giocatore {self.distretto} in {self.zone} sceglie op: {op}")
+            print(f"Giocatore {self.get_name()} in {self.zone} sceglie op: {op}")
 
             if op == 1:
                 targets = [p for p in all_players if p.zone == self.zone and p != self and p.life_points > 0]
@@ -116,18 +122,18 @@ class Player:
                     target = random.choice(targets)
                     self.attack_player(target)
                     print(
-                        f"Distretto {self.distretto} ha attaccato Distretto {target.distretto}, vita rimanente: {target.life_points}")
+                        f"Player {self.get_name()} ha attaccato il player {target.get_name()}, vita rimanente: {target.life_points}")
                 else:
-                    print(f"Distretto {self.distretto} ha provato ad attaccare ma non c'è nessuno in {self.zone}")
+                    print(f"Player {self.get_name()} ha provato ad attaccare ma non c'è nessuno in {self.zone}")
             elif op == 2:
                 if self.game.weapons:
                     self.get_weapon()
-                    print(f"Distretto {self.distretto} ha raccolto {self.weapon[-1]}")
+                    print(f"Player {self.get_name()} ha raccolto {self.weapon[-1]}")
                 else:
-                    print(f"Distretto {self.distretto} voleva un'arma ma sono finite")
+                    print(f"Player {self.nmome} voleva un'arma ma sono finite")
             elif op == 3:
                 self.move_zone(all_players)
-                print(f"{self.distretto} si è spostato in {self.zone}")
+                print(f"{self.get_name()} si è spostato in {self.zone}")
             else:
                 print("non vale ", op)
 
