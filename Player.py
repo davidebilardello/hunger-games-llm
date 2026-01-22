@@ -1,8 +1,8 @@
 import json
 import random
 import re
-from faker import Faker
 
+from faker import Faker
 from vllm import LLM, SamplingParams
 
 fake = Faker()
@@ -22,8 +22,9 @@ class Player:
     )
     sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=100)
 
-    def __init__(self, game, distretto="1", ):
+    def __init__(self, game, distretto="1", is_leader=False):
         self.game = game
+        self.is_leader = is_leader
         self.name = fake.name()
         self.distretto = distretto
 
@@ -63,12 +64,109 @@ class Player:
                 Answer in JSON with only the op code, DO NOT ADD ANY DETAILS, JUST GIVE THE CODE, GIVE JUST ONE LINE OF CODE:
                 """
 
+    def get_leader_election_prompt(self, submitted):
+        submitted = [t.name for t in submitted]
+
+        return f"""You are a professionist player of hunger games. You have to answer ONLY in JSON with just the next operation to do. DO not put other words. Do not type your thoughts.
+
+                        Now you have to choose who is the leader in your group. The leader will have an attack multiplier.
+                        This is the election phase where you can submit the apply to become the leader. Only two can be now nominated.
+
+                        Player that have submitted the application:
+                        {submitted}
+
+                        Give the code of the next operation:
+                        1 - Apply
+                        2 - Not apply
+
+                        Example of valid answer:
+                        {{"op": 1}}
+                        Answer in JSON with only the op code, DO NOT ADD ANY DETAILS, JUST GIVE THE CODE, GIVE JUST ONE LINE OF CODE:
+                        """
+
+    def get_next_leader_election(self, submitted):
+        pr = self.get_leader_election_prompt(submitted)
+        # print(pr)
+        outputs = self.llm.generate(pr, self.sampling_params)
+        return self.handle_leader_election(outputs[0].outputs[0].text)
+
+    def handle_leader_election(self, j):
+        cl = j.replace("```json", "").replace("```", "").strip()
+        cl = re.findall(r'\{.*?\}', cl)
+        cl = cl[0]
+
+        try:
+            data = json.loads(cl)
+            op = data.get("op")
+            print(f"Giocatore {self.get_name()} in {self.zone} sceglie op durante la leader election: {op}")
+
+            if op == 1:
+                return True
+            elif op == 2:
+                return False
+            else:
+                return False
+
+        except Exception as e:
+            print("error")
+            print(e)
+            print(cl)
+            return False
+
+    def get_vote_prompt(self, c1, c2):
+        return f"""You are a professionist player of hunger games. You have to answer ONLY in JSON with just the next operation to do. DO not put other words. Do not type your thoughts.
+
+                        Now you have to vote for the leader in your group.
+                        Candidates:
+                        1 - {c1.name}
+                        2 - {c2.name}
+
+                        Give the code of the candidate you want to vote for:
+                        1 - Vote for {c1.name}
+                        2 - Vote for {c2.name}
+
+                        Example of valid answer:
+                        {{"op": 1}}
+                        Answer in JSON with only the op code, DO NOT ADD ANY DETAILS, JUST GIVE THE CODE, GIVE JUST ONE LINE OF CODE:
+                        """
+
+    def get_vote(self, c1, c2):
+        pr = self.get_vote_prompt(c1, c2)
+        outputs = self.llm.generate(pr, self.sampling_params)
+        return self.handle_vote(outputs[0].outputs[0].text)
+
+    def handle_vote(self, j):
+        cl = j.replace("```json", "").replace("```", "").strip()
+        cl = re.findall(r'\{.*?\}', cl)
+
+        try:
+            if not cl:
+                return random.choice([1, 2])
+            cl = cl[0]
+            data = json.loads(cl)
+            op = data.get("op")
+            print(f"Giocatore {self.get_name()} vota per opzione: {op}")
+
+            if op == 1:
+                return 1
+            elif op == 2:
+                return 2
+            else:
+                return random.choice([1, 2])
+
+        except Exception as e:
+            print("error voting")
+            print(e)
+            return random.choice([1, 2])
+
     def attack_player(self, p):
         weapon_attack = 0
         if len(self.weapon) > 0:
             weapon_attack = self.weapon[0].get('attack', 0)
 
-        p.life_points -= max(self.attack_power, weapon_attack)
+        mul = 1.2 if self.is_leader else 1
+
+        p.life_points -= max(self.attack_power, weapon_attack) * mul
         if p.life_points <= 0:
             p.life_points = 0
 

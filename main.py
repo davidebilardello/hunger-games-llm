@@ -9,6 +9,7 @@ def main():
         print("Warning: HF_TOKEN not found. Ensure you have logged in via 'huggingface-cli login'.")
 
     g = Game()
+    g.handle_leader_election()
     g.loop_game()
 
 
