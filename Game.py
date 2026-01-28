@@ -43,7 +43,7 @@ class Game:
 
                 if len(sub) == 2:
                     found_leaders = True
-                    print(f"2 persone del distretto {i} sono stati nominati, ora si va alla votaziione")
+                    print(f"2 persone del distretto {i} sono stati nominati, ora si va alla votazione")
                     c1 = sub[0]
                     c2 = sub[1]
                     elected = False

@@ -98,7 +98,7 @@ class Player:
         try:
             data = json.loads(cl)
             op = data.get("op")
-            print(f"Giocatore {self.get_name()} in {self.zone} sceglie op durante la leader election: {op}")
+            print(f"Giocatore {self.get_name()} sceglie op durante la leader election: {op}")
 
             if op == 1:
                 return True
