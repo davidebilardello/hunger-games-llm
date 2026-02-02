@@ -1,15 +1,18 @@
 import random
 
 from Player import Player
+from Stats import Stats
 
 
 class Game:
     weapons = [{"name": "sword", "attack": 6}, {"name": "wooden sword", "attack": 4}, {"name": "knife", "attack": 5}, ]
     zones = ["Cornucopia", "Palude Nebbiosa", "Settore dei Geyser", "La Giungla Elettrica"]
 
-    # zones = ["Cornucopia", "Palude Nebbiosa", ]
+    #zones = ["Cornucopia", "Palude Nebbiosa", ]
 
-    def __init__(self, n_groups=5, players_per_group=10):
+    stats= Stats()
+
+    def __init__(self, n_groups=200, players_per_group=10):
         self.groups = {}
         self.n_groups = n_groups
         self.players_per_group = players_per_group
@@ -59,11 +62,13 @@ class Game:
                                 v2 += 1
                         print(f"Voti: {c1.name}: {v1}, {c2.name}: {v2}")
                         if v1 > v2:
+                            self.stats.add_leader_vote(c1,c2)
                             c1.is_leader = True
                             print(f"{c1.get_name()} vince ed è il nuovo leader!")
                             elected = True
                             break
                         elif v2 > v1:
+                            self.stats.add_leader_vote(c2, c1)
                             c2.is_leader = True
                             print(f"{c2.get_name()} vince ed è il nuovo leader!")
                             elected = True
@@ -78,6 +83,7 @@ class Game:
                 print(f"Il distretto {i} non avrà leader")
 
             i += 1
+        self.stats.print_vote()
 
     def loop_game(self):
 
@@ -105,5 +111,6 @@ class Game:
         winner = [p for p in all_players if p.life_points > 0]
         if winner:
             print(f"Il vincitore è il giocatore del distretto {winner[0].distretto} {winner[0].name}")
+            winner[0].stats.print()
         else:
             print("Non è rimasto nessun sopravvissuto.")

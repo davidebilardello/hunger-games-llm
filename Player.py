@@ -5,11 +5,15 @@ import re
 from faker import Faker
 from vllm import LLM, SamplingParams
 
+from Stats import Stats
+
 fake = Faker()
 
 
 class Player:
     model_name = "google/gemma-3-12b-it"
+
+    stats= Stats()
 
     llm = LLM(
         model=model_name,
@@ -36,7 +40,10 @@ class Player:
         return f"{self.name} del distretto {self.distretto}"
 
     def get_prompt(self, targets):
-        target_info = ", ".join([f"Player {t.get_name()}" for t in targets])
+        target_info = [f"Player {t.get_name()}" for t in targets]
+        if len(target_info)>1:
+            target_info= target_info[0:2]
+        target_info = ", ".join(target_info)
         can_attack = len(targets) > 0
 
         return f"""You are a professionist player of hunger games. You have to answer ONLY in JSON with just the next operation to do. DO not put other words. Do not type your thoughts.
@@ -116,8 +123,8 @@ class Player:
 
                         Now you have to vote for the leader in your group.
                         Candidates:
-                        1 - {c1.name}
-                        2 - {c2.name}
+                        1 - {c1.name} | life points {c1.life_points} | attack power {c1.attack_power}
+                        2 - {c2.name} | life points {c2.life_points} | attack power {c2.attack_power}
 
                         Give the code of the candidate you want to vote for:
                         1 - Vote for {c1.name}
@@ -210,6 +217,7 @@ class Player:
         try:
             data = json.loads(cl)
             op = data.get("op")
+            self.stats.add_op_on_surv(op, self.life_points, self.life_points_max)
             print(f"Giocatore {self.get_name()} in {self.zone} sceglie op: {op}")
 
             if op == 1:
