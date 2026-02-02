@@ -9,7 +9,6 @@ fake = Faker()
 
 
 class Player:
-    # model_name = "google/gemma-3-4b-it"
     model_name = "google/gemma-3-12b-it"
 
     llm = LLM(
@@ -22,7 +21,7 @@ class Player:
     )
     sampling_params = SamplingParams(temperature=0.8, top_p=0.95, max_tokens=100)
 
-    def __init__(self, game, distretto="1", is_leader=False):
+    def __init__(self, game, distretto, is_leader=False):
         self.game = game
         self.is_leader = is_leader
         self.name = fake.name()
@@ -31,7 +30,6 @@ class Player:
         self.life_points = random.randrange(15, 20)
         self.attack_power = random.randrange(3, 5)
         self.weapon = []
-        self.operazioni_effettuate = []
         self.zone = "Cornucopia"
 
     def get_name(self):
