@@ -223,10 +223,13 @@ class Player:
                     print(f"Player {self.get_name()} ha provato ad attaccare ma non c'è nessuno in {self.zone}")
             elif op == 2:
                 if self.game.weapons:
-                    self.get_weapon()
-                    print(f"Player {self.get_name()} ha raccolto {self.weapon[-1]}")
+                    if random.random() < 0.6:
+                        self.get_weapon()
+                        print(f"Player {self.get_name()} ha raccolto {self.weapon[-1]}")
+                    else:
+                        print(f"Player {self.get_name()} ha provato a prendere un'arma ma non ci è riuscito")
                 else:
-                    print(f"Player {self.nmome} voleva un'arma ma sono finite")
+                    print(f"Player {self.get_name()} voleva un'arma ma sono finite")
             elif op == 3:
                 self.move_zone(all_players)
                 print(f"{self.get_name()} si è spostato in {self.zone}")
