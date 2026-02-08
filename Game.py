@@ -12,7 +12,7 @@ class Game:
 
     stats= Stats()
 
-    def __init__(self, n_groups=200, players_per_group=10):
+    def __init__(self, n_groups=6, players_per_group=5):
         self.groups = {}
         self.n_groups = n_groups
         self.players_per_group = players_per_group

@@ -33,6 +33,7 @@ class Player:
 
         self.life_points = random.randrange(15, 20)
         self.attack_power = random.randrange(3, 5)
+        self.life_points_max= self.life_points
         self.weapon = []
         self.zone = "Cornucopia"
 
@@ -92,7 +93,7 @@ class Player:
     def get_next_leader_election(self, submitted):
         pr = self.get_leader_election_prompt(submitted)
         # print(pr)
-        outputs = self.llm.generate(pr, self.sampling_params)
+        outputs = self.llm.generate(pr, self.sampling_params, use_tqdm=False)
         return self.handle_leader_election(outputs[0].outputs[0].text)
 
     def handle_leader_election(self, j):
@@ -103,13 +104,15 @@ class Player:
         try:
             data = json.loads(cl)
             op = data.get("op")
-            print(f"Giocatore {self.get_name()} sceglie op durante la leader election: {op}")
 
             if op == 1:
+                print(f"Giocatore {self.get_name()} si è candidato per la leader election")
                 return True
             elif op == 2:
+                print(f"Giocatore {self.get_name()} NON si è candidato per la leader election")
                 return False
             else:
+                print(f"Giocatore {self.get_name()} NON si è candidato per la leader election")
                 return False
 
         except Exception as e:
@@ -137,7 +140,7 @@ class Player:
 
     def get_vote(self, c1, c2):
         pr = self.get_vote_prompt(c1, c2)
-        outputs = self.llm.generate(pr, self.sampling_params)
+        outputs = self.llm.generate(pr, self.sampling_params, use_tqdm=False)
         return self.handle_vote(outputs[0].outputs[0].text)
 
     def handle_vote(self, j):
@@ -150,12 +153,9 @@ class Player:
             cl = cl[0]
             data = json.loads(cl)
             op = data.get("op")
-            print(f"Giocatore {self.get_name()} vota per opzione: {op}")
 
-            if op == 1:
-                return 1
-            elif op == 2:
-                return 2
+            if op == 1 or op == 2:
+                return op
             else:
                 return random.choice([1, 2])
 
@@ -218,9 +218,10 @@ class Player:
             data = json.loads(cl)
             op = data.get("op")
             self.stats.add_op_on_surv(op, self.life_points, self.life_points_max)
-            print(f"Giocatore {self.get_name()} in {self.zone} sceglie op: {op}")
+
 
             if op == 1:
+                print(f"Giocatore {self.get_name()} in {self.zone} sceglie di attaccare")
                 targets = [p for p in all_players if p.zone == self.zone and p != self and p.life_points > 0]
                 if targets:
                     target = random.choice(targets)
@@ -230,6 +231,7 @@ class Player:
                 else:
                     print(f"Player {self.get_name()} ha provato ad attaccare ma non c'è nessuno in {self.zone}")
             elif op == 2:
+                print(f"Giocatore {self.get_name()} in {self.zone} sceglie di provare a raccogliere un arma")
                 if self.game.weapons:
                     if random.random() < 0.6:
                         self.get_weapon()
@@ -256,7 +258,7 @@ class Player:
         for _ in range(5):
             pr = self.get_prompt(targets)
             # print(pr)
-            outputs = self.llm.generate(pr, self.sampling_params)
+            outputs = self.llm.generate(pr, self.sampling_params, use_tqdm=False)
             if self.handle_op(outputs[0].outputs[0].text, all_players):
                 break
 
